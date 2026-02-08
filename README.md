@@ -110,9 +110,18 @@ function test_Custom_Error() public {
 * **Foundry**
 * **Forge**
 * **forge-std**
+---
+# Foundry Testing Quick Guide (README)
+
+This README documents common Foundry testing patterns including assertion labels, event testing, time manipulation, balance utilities, and signing utilities.
 
 ---
-just to add labels to assertions (and nothing else),
+
+## ✅ Adding Labels to Assertions
+
+Use labels in assertions to make test failures more readable:
+
+```solidity
 function test_ErrorLabels() public {
     assertEq(1, 1, "test 1: basic equality");
     assertEq(1, 1, "test 2: repeat equality");
@@ -120,28 +129,110 @@ function test_ErrorLabels() public {
     assertEq(1, 1, "test 4: consistency check");
     assertEq(1, 1, "test 5: final assertion");
 }
+```
 
-testing event emited : 
-    Event public e;
+---
 
-    event Transfer(address indexed from, address indexed to, uint256 amount);
+## 📢 Testing Emitted Events
+
+### Contract Setup
+
+```solidity
+Event public e;
+
+event Transfer(address indexed from, address indexed to, uint256 amount);
+
+function setUp() public {
+    e = new Event();
+}
+```
+
+### Event Test
+
+```solidity
+function testEventTransfer() public {
+    vm.expectEmit(true, true, false, true);
+
+    emit Transfer(address(this), address(123), 10);
+
+    e.transfer(address(this), address(123), 10);
+}
+```
+
+### `expectEmit` Flags
+
+```text
+vm.expectEmit(
+    bool checkTopic1,   // indexed param 1
+    bool checkTopic2,   // indexed param 2
+    bool checkTopic3,   // indexed param 3
+    bool checkData      // non-indexed data
+)
+```
+
+---
+
+## ⏱️ Time & Block Manipulation
+
+Used for testing vesting, staking, locks, epochs, etc.
+
+```text
+vm.warp(timestamp)   → set block.timestamp to future timestamp
+vm.roll(blockNumber) → set block.number
+skip(seconds)        → increment current timestamp
+rewind(seconds)      → decrement current timestamp
+```
+
+---
+
+## 💰 Balance & Account Utilities
+
+```text
+deal(address, uint256) → set ETH balance of address
+hoax(address, uint256) → deal + prank (set balance + msg.sender)
+```
+
+---
+
+## 🔐 Signing & Key Utilities
+
+```solidity
+contract SignTest is Test {
+    // private key = 123
+    // public key  = vm.addr(privateKey)
+    // message     = "secret message"
+    // messageHash = keccak256(bytes(message))
+    // signature   = vm.sign(privateKey, messageHash)
+}
+```
+
+### Flow
+
+```text
+1. Generate address from private key → vm.addr(pk)
+2. Hash message → keccak256(bytes(msg))
+3. Sign hash → vm.sign(pk, hash)
+```
+
+---
+
+## 🧪 Common Commands
+
+```bash
+forge build                  # compile contracts
+forge test -vvv              # run tests with logs
+forge test --gas-report       # gas usage report
+forge test --match-path test/Hello.t.sol
+```
+
+---
+
+## 🛠 Debugging
+
+```solidity
+import "forge-std/console.sol";
+console.log("debug value", value);
+```
 
 
-    function setUp() public {
-        e = new Event();
-    }
-    function testEventTransfer()public{
-     
-     vm.expectEmit(true, true, false, true);
-    
-     emit Transfer(address(this), address(123), 10);
 
-     e.transfer(address(this),address(123),10);
-    }
-
-timer incress for time contrac testing --> 
-
-vm.wrap() -  set block.timestamp to futuer timestamp 
-vm.roll()  - set block number 
-skip() - increment current timestamp 
-rewind() decreate ment current timestamp
